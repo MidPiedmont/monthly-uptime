@@ -1,4 +1,5 @@
 #!/bin/bash
+# This script runs monthly to get a whole month's worth of averaged uptime and response data
 
 # --- Configuration ---
 UPTIME_KUMA_DB="../uptime-kuma/data/kuma.db"
