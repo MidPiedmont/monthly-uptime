@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # --- Configuration ---
-UPTIME_KUMA_DB="/var/www/gov.claytoncountyga.uptime/uptime-kuma/data/kuma.db"
-OUTPUT_DB="./monthly-uptime.db"
+UPTIME_KUMA_DB="../uptime-kuma/data/kuma.db"
+OUTPUT_DB="./data/monthly-uptime.db"
 OUTPUT_TABLE="monthly_reports"
 
 # --- Date Calculation ---
