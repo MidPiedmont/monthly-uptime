@@ -8,8 +8,8 @@ OUTPUT_TABLE="monthly_reports"
 
 # --- Date Calculation ---
 # Calculates the start and end dates for the *last* complete month
-END_DATE=$(date -d "this month" +%Y-%m-%d)
-START_DATE=$(date -d "last month" +%Y-%m-%d)
+START_DATE=$(date --date="$(date +'%Y-%m-01') - 1 month" +%Y-%m-%d)
+END_DATE=$(date --date="$(date +'%Y-%m-01') - 1 second" +%Y-%m-%d)
 
 # New numerical and pretty date variables
 PRETTY_MONTH=$(date -d "last month" +'%B %Y')
@@ -39,17 +39,20 @@ fi
 # --- Database Setup ---
 echo "Creating/Ensuring table structure in $OUTPUT_DB..."
 
-# UPDATED: Added 'month' and 'year' columns
 sqlite3 "$OUTPUT_DB" "
 CREATE TABLE IF NOT EXISTS $OUTPUT_TABLE (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    m_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    type TEXT,
+    parent TEXT,
     pretty_month TEXT NOT NULL,
     month INTEGER NOT NULL,
     year INTEGER NOT NULL,
-    name TEXT NOT NULL,
     response_time REAL,
     uptime REAL,
-    UNIQUE(month, year, name)
+    -- Ensure only one report row exists per monitor ID per month/year
+    UNIQUE(m_id, month, year)
 );
 "
 
@@ -59,12 +62,15 @@ echo "Extracting and loading data for $PRETTY_MONTH from $START_DATE to $END_DAT
 SQL_EXECUTION="
 ATTACH DATABASE '$UPTIME_KUMA_DB' AS source;
 
-INSERT INTO $OUTPUT_TABLE (pretty_month, month, year, name, response_time, uptime)
+INSERT INTO $OUTPUT_TABLE (m_id, name, type, parent, pretty_month, month, year, response_time, uptime)
 SELECT
+    m.id AS m_id,
+    m.name,
+    m.type,
+    m.parent,
     '$PRETTY_MONTH' AS pretty_month,
     $MONTH_NUM AS month,
     $YEAR_NUM AS year,
-    m.name,
     AVG(CASE WHEN h.status = 1 THEN h.ping ELSE NULL END) AS response_time,
     CAST(SUM(CASE WHEN h.status = 1 THEN 1 ELSE 0 END) AS REAL) * 100 / SUM(CASE WHEN h.status IN (0, 1) THEN 1 ELSE 0 END) AS uptime
 FROM
