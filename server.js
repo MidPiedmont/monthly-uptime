@@ -3,6 +3,7 @@
 // 1. Import Dependencies
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('node:path')
 
 // 2. Initialize Express App
 const app = express();
@@ -26,16 +27,19 @@ let db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READONLY, (err) => {
 // Middleware (for JSON request bodies, useful for POST routes later)
 app.use(express.json());
 
-// 4. API Route to Fetch All Reports
+// API Route to Fetch All Reports
 // Access this route at: http://localhost:3000/api/reports
+// server.js (Your app.get route)
+
 app.get('/monthly-reports', (req, res) => {
-    // Extract potential filters from the query string
-    const { month, year, name } = req.query;
+    // 1. Extract filters from the URL query string
+    const { month, year, monitor_ids } = req.query; 
     
+    // Arrays to build the SQL query
     const conditions = [];
     const params = [];
 
-    // Build the WHERE clause dynamically
+    // 2. Build the WHERE clause dynamically
     
     if (month) {
         conditions.push("month = ?");
@@ -47,23 +51,28 @@ app.get('/monthly-reports', (req, res) => {
         params.push(year);
     }
     
-    if (name) {
-        // Split the input string (e.g., "Appeals,Billing,Portal") into an array
-        const namesArray = name.split(',').map(n => n.trim());
+    // Condition for filtering by m_id from the URL query
+    if (monitor_ids) {
+        // monitor_ids will be a comma-separated string (e.g., "1,5,9")
+        // Split it into an array of individual IDs
+        const ids = monitor_ids.split(','); 
         
-        // Create a string of '?' placeholders for the SQL IN clause (e.g., '?, ?, ?')
-        const placeholders = namesArray.map(() => '?').join(', ');
-        
-        // Add the condition: filter where the 'name' is IN the list of placeholders
-        conditions.push(`name IN (${placeholders})`);
-        
-        // Add all individual names to the parameters array
-        params.push(...namesArray);
+        if (ids.length > 0) {
+            // Create a string of '?' placeholders for the prepared statement
+            const placeholders = ids.map(() => '?').join(', ');
+            
+            // Add the condition: filter where the 'm_id' is IN the list of placeholders
+            conditions.push(`m_id IN (${placeholders})`);
+            
+            // Add all individual monitor IDs to the parameters array
+            params.push(...ids);
+        }
     }
 
     // 3. Construct the full SQL query
     let sql = `SELECT * FROM ${TABLE_NAME}`;
 
+    // Append the WHERE clause if conditions exist
     if (conditions.length > 0) {
         sql += " WHERE " + conditions.join(" AND ");
     }
@@ -71,11 +80,10 @@ app.get('/monthly-reports', (req, res) => {
     // Append the sorting clause
     sql += " ORDER BY year DESC, month DESC, name ASC";
 
-    // 4. Execute the query with dynamic parameters
+    // 4. Execute the query
     db.all(sql, params, (err, rows) => {
         if (err) {
-            res.status(500).json({"error": "Could not fetch data from the database."});
-            console.error(`SQL Error: ${err.message}`);
+            res.status(500).json({"status": "error", "error": `Could not fetch data from the database. ${err.message}`});
             return;
         }
         
@@ -87,10 +95,12 @@ app.get('/monthly-reports', (req, res) => {
     });
 });
 
-// 5. Root Route (Sanity Check)
+// Root Route (Sanity Check)
 app.get('/monthly-reports/test', (req, res) => {
   res.send('Web App Server is running. Access reports at /api/reports');
 });
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 // 6. Start the Server
 app.listen(port, () => {

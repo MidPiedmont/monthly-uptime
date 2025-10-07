@@ -6,9 +6,57 @@
     <link rel="icon" href="favicon.ico" />
     <link rel="stylesheet" href="global.css" />
     <script src="scripts.js" defer></script>
-    <title>Monthly Reports</title>
+    <title>Monthly Uptime</title>
   </head>
   <body>
-    <p>Monthly Reports go here</p>
+    <header>
+        <h1>Monthly Uptime</h1>
+    </header>
+
+    <main>
+      <section id="filter-controls">
+        <h2>Report Filters</h2>
+        <div id="date-filters">
+          <label for="month-select">Month:</label>
+          <select id="month-select"></select>
+
+          <label for="year-select">Year:</label>
+          <select id="year-select"></select>
+        </div>
+
+        <br>
+
+        <details>
+          <summary>Service Name Filters (Click to expand)</summary>
+          <div id="name-filters">
+          </div>
+        </details>
+        <br>
+        <button id="apply-filters">Apply Filters</button>
+      </section>
+
+      <hr>
+
+      <section>
+        <h2>Filtered Data</h2>
+        <button id="download-csv" disabled>Download as CSV</button>
+        <table id="report-table" border="1">
+          <thead>
+            <tr>
+              <th>Monitor ID</th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Parent</th>
+              <th>Month</th>
+              <th>Year</th>
+              <th>Response Time (ms)</th>
+              <th>Uptime (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+              </tbody>
+        </table>
+      </section>
+    </main>
   </body>
 </html>
