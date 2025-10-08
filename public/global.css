@@ -1,0 +1,203 @@
+/* global.css */
+
+/* ------------------------------------------- */
+/* --- 1. Root Variables (Light and Dark) ---- */
+/* ------------------------------------------- */
+
+/* Default Light Mode (Primary Kuma Look) */
+:root {
+    /* Brand/Accent Colors (Green) */
+    --kuma-brand: #5cdd8b;       /* Primary Uptime Green (Accent/Success) */
+    --kuma-brand-dark: #3b8b59;  /* Darker Green for hover/borders */
+    --kuma-red: #e14646;         /* Standard failure red */
+    
+    /* UI Colors (Standard Light Mode) */
+    --kuma-bg-primary: #f8f9fa;  /* Body/Page Background (Light Grey) */
+    --kuma-bg-secondary: white;  /* Section/Card/Table Background */
+    --kuma-text-primary: #212529;/* Standard Text Color */
+    --kuma-text-secondary: #6c757d; /* Muted text */
+    --kuma-border: #dee2e6;      /* General border color */
+}
+
+/* Dark Mode Overrides (Applied when OS prefers dark scheme) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* UI Colors (Dark Mode - based on your inspection) */
+        --kuma-bg-primary: #080b0f; /* Darker Body Background */
+        --kuma-bg-secondary: #161b22; /* Section/Card Background */
+        --kuma-text-primary: #e4e6eb; /* Light Text Color */
+        --kuma-text-secondary: #b0b3b8; /* Muted light text */
+        --kuma-border: #3a3b3c;      /* Dark Border Color */
+    }
+}
+
+
+/* ------------------------------------------- */
+/* --- 2. Base Styles & Typography (Uses Vars) --- */
+/* ------------------------------------------- */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    line-height: 1.6;
+    background-color: var(--kuma-bg-primary);
+    color: var(--kuma-text-primary);
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.3s; /* Smooth transition for theme switch */
+}
+
+header {
+    background-color: var(--kuma-bg-secondary);
+    padding: 15px 40px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    margin-left: 10px; 
+}
+
+main {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+/* --- 3. Buttons & Controls --- */
+button, select {
+    padding: .375rem .75rem;
+    border: 1px solid var(--kuma-brand);
+    background-color: var(--kuma-brand);
+    color: black;
+    cursor: pointer;
+    border-radius: 50rem;
+    transition: background-color 0.2s;
+    margin-right: 10px;
+}
+
+button:hover:not(:disabled) {
+    background-color: var(--kuma-brand-dark);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--kuma-border);
+    color: var(--kuma-text-secondary);
+    border-color: var(--kuma-border);
+}
+
+/* --- 4. Filter Section --- */
+#filter-controls {
+    background: var(--kuma-bg-secondary);
+    padding: 20px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    p {
+        margin: 0.4rem;
+    }
+}
+
+#date-filters {
+    label {
+        font-weight: 600;
+        margin-right: 10px;
+        margin: 0.4rem;
+    }
+    h3 {
+        margin: 0rem;
+        font-weight: 600;
+    }
+    p {
+        margin: 0.4rem;
+    }
+}
+
+/* #date-filters label, #filter-controls h3 {
+    font-weight: 600;
+    margin-right: 10px;
+} */
+
+/* Parent/Child Filter Checklists */
+#name-filters {
+    padding: 4px 0;
+    margin: 0.4rem;
+    border: 1px solid var(--kuma-border);
+    border-radius: 4px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: var(--kuma-bg-primary); /* Use primary BG to contrast with secondary */
+    margin-bottom: 10px;
+}
+
+.monitor-group {
+    border-bottom: 1px solid var(--kuma-border);
+}
+
+.monitor-group summary {
+    padding: 8px 10px;
+    cursor: pointer;
+    background-color: var(--kuma-border); /* Use border color for slight shading */
+    font-weight: 600;
+}
+
+.group-children {
+    padding: 5px 0 5px 20px; 
+    background-color: var(--kuma-bg-secondary);
+}
+
+.group-children label {
+    color: var(--kuma-text-primary);
+}
+
+
+/* --- 5. Table Report Styling (Multiple Tables) --- */
+
+#report-table-container h4 {
+    color: var(--kuma-brand-dark); 
+    border-bottom: 2px solid var(--kuma-brand);
+    padding-bottom: 5px;
+    margin-top: 30px;
+    font-size: 1.2rem;
+}
+
+#report-table-container table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--kuma-bg-secondary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+#report-table-container th, 
+#report-table-container td {
+    border: 1px solid var(--kuma-border);
+    padding: 10px 12px;
+    text-align: left;
+}
+
+#report-table-container thead th {
+    background-color: var(--kuma-brand);
+    color: black;
+    font-weight: 600;
+    border-color: var(--kuma-brand-dark);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+h2 {
+    margin: 0px;
+}
+
+#data-h2 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+#download-csv {
+    margin-top: 0.5rem;
+}

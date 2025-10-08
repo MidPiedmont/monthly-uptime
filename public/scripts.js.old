@@ -1,16 +1,12 @@
 // public/scripts.js
 const API_ENDPOINT = 'http://localhost:3000/monthly-reports';
-const STANDARD_REPORT_M_IDS = [
-    67, 71, 2, 61, 36, 78, 32, 34, 54, 91, 38, 60, 55
-];
 
-// GLOBAL STATE
-let allMonitorData = []; 
+// --- DATE LOGIC (FIXED: Uses 1-based index for select/DB) ---
 
-// DATE LOGIC
-
-// Calculates the month and year for the last complete month.
-// Returns the month as a 1-based index (1-12) and the correct year.
+/**
+ * Calculates the month and year for the last complete month.
+ * Returns the month as a 1-based index (1-12) and the correct year.
+ */
 const getDefaultMonthAndYear = () => {
     const today = new Date();
     // JavaScript getMonth() is 0-indexed (Jan=0).
@@ -39,6 +35,8 @@ const defaultDate = getDefaultMonthAndYear();
 const DEFAULT_MONTH = defaultDate.month;
 const DEFAULT_YEAR = defaultDate.year;
 
+let availableNames = [];
+
 // UTILITY FUNCTIONS
 
 // Converts the table data array into a CSV string.
@@ -47,7 +45,7 @@ function convertToCsv(data) {
     
     // Check the state of the new checkbox
     const includeGroupsCheckbox = document.getElementById('include-group-averages');
-    const includeGroups = includeGroupsCheckbox ? includeGroupsCheckbox.checked : true; 
+    const includeGroups = includeGroupsCheckbox ? includeGroupsCheckbox.checked : true; // Default to true if checkbox is missing
     
     let filteredData = data;
     
@@ -56,7 +54,7 @@ function convertToCsv(data) {
         filteredData = data.filter(item => item.type !== 'group');
     }
     
-    if (filteredData.length === 0) return ''; 
+    if (filteredData.length === 0) return ''; // Recheck after filtering
     
     // Use the keys of the first object for the header
     const header = Object.keys(filteredData[0]).join(','); 
@@ -122,48 +120,6 @@ function populateDateFilters() {
     yearSelect.value = DEFAULT_YEAR;
 }
 
-function applyStandardReportFilter() {
-    // Safety check: ensure we have data to look up parent IDs
-    if (!allMonitorData || allMonitorData.length === 0) {
-        console.warn("Cannot apply standard report filter: Monitor metadata is not yet loaded.");
-        return;
-    }
-    
-    // Create the Monitor Map locally for safe parent lookup
-    const monitorMap = new Map(allMonitorData.map(m => [String(m.m_id), m]));
-
-    // 1. Deselect ALL checkboxes first
-    const allCheckboxes = document.querySelectorAll('#name-filters input[type="checkbox"]');
-    allCheckboxes.forEach(cb => {
-        cb.checked = false;
-    });
-
-    // 2. Select the subset of 10 desired monitors
-    STANDARD_REPORT_M_IDS.forEach(id => {
-        // A. Check the child/monitor checkbox
-        const monitorCheckbox = document.querySelector(`input[value="${id}"]`);
-        if (monitorCheckbox) {
-            monitorCheckbox.checked = true;
-            
-            // B. Look up and check the parent checkbox (essential for rendering the group table)
-            const parentId = monitorMap.get(id)?.parent; 
-            
-            if (parentId) {
-                // Find the parent's checkbox by its M_ID value
-                const parentCheckbox = document.querySelector(`input[value="${String(parentId)}"]`);
-                
-                if (parentCheckbox) {
-                    // Check the parent only if one of its children is selected
-                    parentCheckbox.checked = true;
-                }
-            }
-        }
-    });
-
-    // 3. Trigger the data fetch
-    fetchAndRenderData();
-}
-
 function renderTable(data) {
     const container = document.getElementById('report-table-container');
     if (!container) return;
@@ -176,7 +132,7 @@ function renderTable(data) {
         return;
     }
 
-    // --- 1. Group Data ---
+    // --- 1. Group Data (Logic remains the same) ---
     const groups = new Map();
     const unGroupedMonitors = [];
 
@@ -210,26 +166,18 @@ function renderTable(data) {
     parentGroups.forEach(group => {
         const parent = group.parentData;
         const children = group.children.sort((a, b) => a.name.localeCompare(b.name));
-        
-        // **FIX**: The table should render as long as the parent metadata was fetched 
-        // (which we force in fetchAndRenderData if any child is selected). 
-        // We only skip if NO children were fetched AND the parent wasn't fetched, 
-        // but since we guarantee the parent is fetched, we only skip if no children exist.
-        if (children.length === 0) {
-             // If only the parent row was fetched, but no children, we assume the user deselected all children.
-             // We can render an empty table or just skip it. Skipping is cleaner.
-             return; 
-        }
+        // Skip rendering the table if there are no children (only the parent was returned)
+        if (children.length === 0) return; 
 
         // A. Render Group Header (H4)
         const h4 = document.createElement('h4');
         const groupUptime = parent.uptime ? parent.uptime.toFixed(2) + '%' : 'N/A';
-        h4.innerHTML = `${parent.name}`;
+        h4.innerHTML = `${parent.name} | Average Uptime: ${groupUptime}`;
         container.appendChild(h4);
 
         // B. Render Table Structure
         const table = document.createElement('table');
-        table.id = `report-table-${parent.m_id}`; 
+        table.id = `report-table-${parent.m_id}`; // Give each table a unique ID
         table.setAttribute('border', '1');
 
         
@@ -268,7 +216,7 @@ function renderTable(data) {
             row.insertCell().textContent = item.uptime ? item.uptime.toFixed(2) : 'N/A';
         });
         
-        container.appendChild(document.createElement('br')); 
+        container.appendChild(document.createElement('br')); // Separator between tables
     });
 
     // RENDER: Un-Grouped Monitors (Optional, but good practice)
@@ -276,8 +224,12 @@ function renderTable(data) {
         const h4 = document.createElement('h4');
         h4.textContent = `Ungrouped Monitors`;
         container.appendChild(h4);
+
+        const table = document.createElement('table');
+        table.setAttribute('border', '1');
         
-        // ... Render table structure and rows ... 
+        // ... Render table header and rows ... (similar logic as above)
+        // Omitted for brevity, but follows the same pattern as group tables.
     }
 }
 
@@ -300,7 +252,7 @@ function setupGroupToggle(parentCheckbox, childMonitorIds) {
         fetchAndRenderData();
     });
     
-    // 2. Child Checkbox Listeners (Children -> Parent)
+    // 2. Child Checkbox Listeners (Children -> Parent) (Unchanged)
     childMonitorIds.forEach(id => {
         const childCheckbox = document.querySelector(`input[value="${id}"]`);
         if (childCheckbox) {
@@ -323,9 +275,6 @@ function setupGroupToggle(parentCheckbox, childMonitorIds) {
 
 // Populates the Name filters with a Parent/Child hierarchy.
 function populateNameFilters(allData) {
-    // Store data globally for use in fetchAndRenderData
-    allMonitorData = allData;
-    
     const nameFiltersDiv = document.getElementById('name-filters');
     if (!nameFiltersDiv) return;
     nameFiltersDiv.innerHTML = ''; 
@@ -376,7 +325,6 @@ function populateNameFilters(allData) {
         // Create the main <details> container for the group
         const details = document.createElement('details');
         details.className = 'monitor-group';
-        details.open = false; // Keep groups closed by default
         
         // Create <summary> with the Parent Checkbox
         const summary = document.createElement('summary');
@@ -403,7 +351,7 @@ function populateNameFilters(allData) {
         
         group.children
             .sort((a, b) => a.name.localeCompare(b.name))
-            .forEach((monitor) => {
+            .forEach((monitor, index) => {
                 const container = document.createElement('div');
                 const checkbox = document.createElement('input');
                 const label = document.createElement('label');
@@ -464,9 +412,11 @@ async function fetchAndRenderData() {
     // Use a Set to store IDs, ensuring only unique IDs are sent to the API
     const finalIdsToFetch = new Set(baseIds);
     
-    // --- CORE BUG FIX: FORCE PARENT ID INTO FETCH LIST ---
+    // --- CORE BUG FIX ---
+    // Iterate over the base list and ensure any child's parent ID is also included.
     
-    if (allMonitorData.length > 0) {
+    // Assuming 'allMonitorData' is the global array of all monitor objects fetched during init.
+    if (typeof allMonitorData !== 'undefined') {
         const monitorMap = new Map(allMonitorData.map(m => [String(m.m_id), m]));
 
         baseIds.forEach(id => {
@@ -508,13 +458,13 @@ async function fetchAndRenderData() {
 
     reportTableContainer.innerHTML = '<p>Loading...</p>';
 
-    try {
+try {
         const response = await fetch(url);
         const result = await response.json();
 
         if (result.status === 'success' && result.data) {
             console.log('2 Rows Fetched: ' + result.count);
-            renderTable(result.data); 
+            renderTable(result.data); // <-- This is now running!
             
             resultCountSpan.textContent = result.data.length;
 
@@ -542,18 +492,9 @@ async function fetchAndRenderData() {
 async function init() {
     populateDateFilters();
 
-    // --- NEW STEP: Add change listeners to the date selects ---
-    const monthSelect = document.getElementById('month-select');
-    const yearSelect = document.getElementById('year-select');
-    
-    // Attach fetchAndRenderData directly to the 'change' event for instant updates
-    if (monthSelect) monthSelect.addEventListener('change', fetchAndRenderData);
-    if (yearSelect) yearSelect.addEventListener('change', fetchAndRenderData);
-
     // 1. Initial fetch to get ALL unique monitor names/IDs for the filter list.
     try {
-        // Fetch all data for the default month/year to populate the filters
-        const url = `${API_ENDPOINT}?month=${DEFAULT_MONTH}&year=${DEFAULT_YEAR}`;
+        const url = `${API_ENDPOINT}?year=${DEFAULT_YEAR}&monitor_ids=`;
         
         const allNamesResponse = await fetch(url);
         const allNamesResult = await allNamesResponse.json();
@@ -567,8 +508,7 @@ async function init() {
     }
 
     // 2. Set up event listeners
-    document.getElementById('standard-report-button')
-        .addEventListener('click', applyStandardReportFilter);
+    document.getElementById('apply-filters').addEventListener('click', fetchAndRenderData);
     
     // 3. Load the default view 
     fetchAndRenderData(); 

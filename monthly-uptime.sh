@@ -80,7 +80,7 @@ LEFT JOIN
 WHERE
     h.time >= '$START_DATE' AND h.time < '$END_DATE'
 GROUP BY
-    m.name;
+    m.id, m.name, m.type, m.parent;
 "
 
 # Execute the entire script against the OUTPUT_DB
