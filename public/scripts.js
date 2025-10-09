@@ -268,7 +268,7 @@ function renderTable(data) {
             row.insertCell().textContent = item.uptime ? item.uptime.toFixed(2) : 'N/A';
         });
         
-        container.appendChild(document.createElement('br')); 
+        // container.appendChild(document.createElement('br')); 
     });
 
     // RENDER: Un-Grouped Monitors (Optional, but good practice)
