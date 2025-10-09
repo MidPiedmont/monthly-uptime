@@ -1,5 +1,5 @@
 // public/scripts.js
-const API_ENDPOINT = 'http://localhost:3000/monthly-reports';
+const API_ENDPOINT = '/monthly-reports';
 const STANDARD_REPORT_M_IDS = [
     67, 71, 2, 61, 36, 78, 32, 34, 54, 91, 38, 60, 55
 ];
