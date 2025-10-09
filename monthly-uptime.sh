@@ -7,11 +7,8 @@ OUTPUT_DB="./data/monthly-uptime.db"
 OUTPUT_TABLE="monthly_reports"
 
 # --- Date Calculation ---
-# Calculates the start and end dates for the *last* complete month
 START_DATE=$(date --date="$(date +'%Y-%m-01') - 1 month" +%Y-%m-%d)
 END_DATE=$(date --date="$(date +'%Y-%m-01') - 1 second" +%Y-%m-%d)
-
-# New numerical and pretty date variables
 PRETTY_MONTH=$(date -d "last month" +'%B %Y')
 MONTH_NUM=$(date -d "last month" +'%m')
 YEAR_NUM=$(date -d "last month" +'%Y')
@@ -22,7 +19,7 @@ if [ ! -f "$UPTIME_KUMA_DB" ]; then
     exit 1
 fi
 
-# --- Check if ran this month ---
+# Check if ran this month
 if [ -f "$OUTPUT_DB" ]; then
     echo "Checking if report for $PRETTY_MONTH already exists..."
     
@@ -36,7 +33,7 @@ if [ -f "$OUTPUT_DB" ]; then
     echo "No existing report found. Proceeding with generation."
 fi
 
-# --- Database Setup ---
+# Database Setup
 echo "Creating/Ensuring table structure in $OUTPUT_DB..."
 
 sqlite3 "$OUTPUT_DB" "
@@ -56,7 +53,7 @@ CREATE TABLE IF NOT EXISTS $OUTPUT_TABLE (
 );
 "
 
-# --- SQL Execution Block ---
+# SQL Execution Block
 echo "Extracting and loading data for $PRETTY_MONTH from $START_DATE to $END_DATE..."
 
 SQL_EXECUTION="

@@ -132,20 +132,20 @@ function applyStandardReportFilter() {
     // Create the Monitor Map locally for safe parent lookup
     const monitorMap = new Map(allMonitorData.map(m => [String(m.m_id), m]));
 
-    // 1. Deselect ALL checkboxes first
+    // Deselect ALL checkboxes first
     const allCheckboxes = document.querySelectorAll('#name-filters input[type="checkbox"]');
     allCheckboxes.forEach(cb => {
         cb.checked = false;
     });
 
-    // 2. Select the subset of 10 desired monitors
+    // Select the subset of 10 desired monitors
     STANDARD_REPORT_M_IDS.forEach(id => {
-        // A. Check the child/monitor checkbox
+        // Check the child/monitor checkbox
         const monitorCheckbox = document.querySelector(`input[value="${id}"]`);
         if (monitorCheckbox) {
             monitorCheckbox.checked = true;
             
-            // B. Look up and check the parent checkbox (essential for rendering the group table)
+            // Look up and check the parent checkbox (essential for rendering the group table)
             const parentId = monitorMap.get(id)?.parent; 
             
             if (parentId) {
@@ -160,7 +160,7 @@ function applyStandardReportFilter() {
         }
     });
 
-    // 3. Trigger the data fetch
+    // Trigger the data fetch
     fetchAndRenderData();
 }
 
@@ -176,7 +176,7 @@ function renderTable(data) {
         return;
     }
 
-    // --- 1. Group Data ---
+    // Group Data
     const groups = new Map();
     const unGroupedMonitors = [];
 
@@ -204,7 +204,7 @@ function renderTable(data) {
         .filter(group => group.parentData)
         .sort((a, b) => a.parentData.name.localeCompare(b.parentData.name));
         
-    // --- 2. Render Groups into Separate Tables ---
+    // Render Groups into Separate Tables
     
     // RENDER: Parent Groups
     parentGroups.forEach(group => {
@@ -221,13 +221,13 @@ function renderTable(data) {
              return; 
         }
 
-        // A. Render Group Header (H4)
+        // Render Group Header (H4)
         const h4 = document.createElement('h4');
         const groupUptime = parent.uptime ? parent.uptime.toFixed(2) + '%' : 'N/A';
         h4.innerHTML = `${parent.name}`;
         container.appendChild(h4);
 
-        // B. Render Table Structure
+        // Render Table Structure
         const table = document.createElement('table');
         table.id = `report-table-${parent.m_id}`; 
         table.setAttribute('border', '1');
@@ -254,7 +254,7 @@ function renderTable(data) {
 
         const tableBody = table.querySelector('tbody');
 
-        // C. Render Children Rows
+        // Render Children Rows
         children.forEach(item => {
             const row = tableBody.insertRow();
             // Children rows are just standard data rows now
@@ -276,15 +276,13 @@ function renderTable(data) {
         const h4 = document.createElement('h4');
         h4.textContent = `Ungrouped Monitors`;
         container.appendChild(h4);
-        
-        // ... Render table structure and rows ... 
     }
 }
 
 // Sets up the event listener for a Parent Group checkbox.
 function setupGroupToggle(parentCheckbox, childMonitorIds) {
     
-    // 1. Parent Checkbox Listener (Parent -> Children)
+    // Parent Checkbox Listener (Parent -> Children)
     parentCheckbox.addEventListener('change', (e) => {
         const isChecked = e.target.checked;
         
@@ -300,7 +298,7 @@ function setupGroupToggle(parentCheckbox, childMonitorIds) {
         fetchAndRenderData();
     });
     
-    // 2. Child Checkbox Listeners (Children -> Parent)
+    // Child Checkbox Listeners (Children -> Parent)
     childMonitorIds.forEach(id => {
         const childCheckbox = document.querySelector(`input[value="${id}"]`);
         if (childCheckbox) {
@@ -363,12 +361,12 @@ function populateNameFilters(allData) {
         }
     });
 
-    // 2. Filter and sort only complete parent groups
+    // Filter and sort only complete parent groups
     const parentGroups = Array.from(groups.values())
         .filter(group => group.parentData) // Must have parent metadata
         .sort((a, b) => a.parentData.name.localeCompare(b.parentData.name));
         
-    // 3. Render HTML and Setup Listeners
+    // Render HTML and Setup Listeners
     
     parentGroups.forEach(group => {
         const parent = group.parentData;
@@ -395,7 +393,7 @@ function populateNameFilters(allData) {
         summary.appendChild(parentLabel);
         details.appendChild(summary);
         
-        // --- Render Children Monitors ---
+        // Render Children Monitors
         const childrenDiv = document.createElement('div');
         childrenDiv.className = 'group-children';
         
@@ -430,7 +428,7 @@ function populateNameFilters(allData) {
         setupGroupToggle(parentCheckbox, childMonitorIds);
     });
     
-    // --- Render Un-grouped/Single Monitors ---
+    // Render Un-grouped/Single Monitors
     monitors
         .sort((a, b) => a.name.localeCompare(b.name))
         .forEach(monitor => {
@@ -513,7 +511,6 @@ async function fetchAndRenderData() {
         const result = await response.json();
 
         if (result.status === 'success' && result.data) {
-            console.log('2 Rows Fetched: ' + result.count);
             renderTable(result.data); 
             
             resultCountSpan.textContent = result.data.length;
@@ -559,7 +556,6 @@ async function init() {
         const allNamesResult = await allNamesResponse.json();
 
         if (allNamesResult.status === 'success' && allNamesResult.data) {
-            console.log('1 Rows Fetched for Filters: ' + allNamesResult.count);
             populateNameFilters(allNamesResult.data);
         }
     } catch (e) {
