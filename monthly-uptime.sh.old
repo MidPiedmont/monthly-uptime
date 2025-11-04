@@ -1,5 +1,4 @@
 #!/bin/bash
-# Monthly Uptime Report Generator v2.0
 # This script runs monthly to get a whole month's worth of averaged uptime and response data
 
 # --- Configuration ---
@@ -69,15 +68,14 @@ SELECT
     '$PRETTY_MONTH' AS pretty_month,
     $MONTH_NUM AS month,
     $YEAR_NUM AS year,
-    AVG(s.ping) AS response_time,
-    SUM(s.up) * 100.0 / (SUM(s.up) + SUM(s.down)) AS uptime
+    AVG(CASE WHEN h.status = 1 THEN h.ping ELSE NULL END) AS response_time,
+    CAST(SUM(CASE WHEN h.status = 1 THEN 1 ELSE 0 END) AS REAL) * 100 / SUM(CASE WHEN h.status IN (0, 1) THEN 1 ELSE 0 END) AS uptime
 FROM
     source.monitor AS m
 LEFT JOIN
-    source.stat_daily AS s ON m.id = s.monitor_id
+    source.heartbeat AS h ON m.id = h.monitor_id
 WHERE
-    -- Filter stats to the desired month
-    s.timestamp >= strftime('%s', '$START_DATE') AND s.timestamp < strftime('%s', '$END_DATE')
+    h.time >= '$START_DATE' AND h.time < '$END_DATE'
 GROUP BY
     m.id, m.name, m.type, m.parent;
 "
